@@ -2,10 +2,12 @@
 const esp32IpAddress = '192.168.1.107';  // Beispiel-IP-Adresse deines ESP32
 const esp32Port = 80;  // Beispiel-Port für den WebSocket-Server
 
-// Funktion zum Verbinden mit dem ESP32
+let socket;  // WebSocket-Verbindungsobjekt
+
+// Funktion zum Verbinden mit dem ESP32 über WebSocket
 function connectToESP32() {
     // WebSocket-Verbindung aufbauen
-    const socket = new WebSocket(`ws://${esp32IpAddress}:${esp32Port}`);
+    socket = new WebSocket(`ws://${esp32IpAddress}:${esp32Port}`);
 
     // Eventlistener für die Verbindung
     socket.onopen = function() {
@@ -31,5 +33,25 @@ function connectToESP32() {
     return socket;
 }
 
-// Export der Funktion, falls das Modul unterstützt wird
-// export { connectToESP32 };
+// Funktion zum Steuern der LED am ESP32
+function controlLED(status) {
+    if (socket.readyState === WebSocket.OPEN) {
+        const message = JSON.stringify({ command: 'led_control', status: status });
+        socket.send(message);
+        console.log('Nachricht an ESP32 gesendet:', message);
+    } else {
+        console.error('WebSocket-Verbindung nicht geöffnet.');
+    }
+}
+
+// Beispiel: LED ein- und ausschalten
+function turnOnLED() {
+    controlLED(true);
+}
+
+function turnOffLED() {
+    controlLED(false);
+}
+
+// Verbindung zum WebSocket-Server herstellen
+connectToESP32();
