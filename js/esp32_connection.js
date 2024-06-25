@@ -1,5 +1,3 @@
-// esp32_connection.js
-
 // Verbindungsparameter
 const esp32IpAddress = '192.168.1.107';  // Beispiel-IP-Adresse deines ESP32
 const esp32Port = 80;  // Beispiel-Port für den WebSocket-Server
