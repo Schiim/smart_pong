@@ -55,3 +55,21 @@ function turnOffLED() {
 
 // Verbindung zum WebSocket-Server herstellen
 connectToESP32();
+// Funktion zum Überprüfen des Verbindungsstatus zum ESP32
+function checkConnectionStatus() {
+    if (socket.readyState === WebSocket.CONNECTING) {
+        console.log('Verbindung wird aufgebaut...');
+    } else if (socket.readyState === WebSocket.OPEN) {
+        console.log('Verbindung ist geöffnet und bereit für Kommunikation.');
+    } else if (socket.readyState === WebSocket.CLOSING) {
+        console.log('Verbindung wird geschlossen...');
+    } else if (socket.readyState === WebSocket.CLOSED) {
+        console.log('Verbindung ist geschlossen.');
+    } else {
+        console.log('Unbekannter Verbindungsstatus:', socket.readyState);
+    }
+}
+
+// Beispiel: Überprüfen des Verbindungsstatus
+setInterval(checkConnectionStatus, 5000); // Alle 5 Sekunden den Verbindungsstatus überprüfen
+
