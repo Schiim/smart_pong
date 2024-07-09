@@ -73,7 +73,7 @@ function prepareMatch() {
 
 
 function sendColorsToESP32(color1, color2) {
-  const url = "http://192.168.0.33/"; // Ersetze <ESP32_IP> durch die IP-Adresse des ESP32
+  const url = "https://carnation-mango-achillobator.glitch.me"; // Ersetze "your-project-name" durch den Namen deines Glitch-Projekts
   const data = {
       team1Color: color1,
       team2Color: color2
