@@ -59,13 +59,40 @@ function handleTeamSelection() {
 
 function prepareMatch() {
   if (selectedTeams.length === 2) {
-    const matchInfo = document.getElementById("matchInfo");
-    matchInfo.innerHTML =
-      generateMatchHTML(selectedTeams[0], 0) +
-      " vs " +
-      generateMatchHTML(selectedTeams[1], 1);
-    document.getElementById("endMatchButton").classList.remove("hidden");
+      const matchInfo = document.getElementById("matchInfo");
+      matchInfo.innerHTML =
+          generateMatchHTML(selectedTeams[0], 0) +
+          " vs " +
+          generateMatchHTML(selectedTeams[1], 1);
+      document.getElementById("endMatchButton").classList.remove("hidden");
+
+      // Sende die Teamfarben an das ESP32
+      sendColorsToESP32(selectedTeams[0].color, selectedTeams[1].color);
   }
+}
+
+
+function sendColorsToESP32(color1, color2) {
+  const url = "http://192.168.0.33/"; // Ersetze <ESP32_IP> durch die IP-Adresse des ESP32
+  const data = {
+      team1Color: color1,
+      team2Color: color2
+  };
+
+  fetch(url, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+  })
+  .then(response => response.text())
+  .then(data => {
+      console.log('Erfolg:', data);
+  })
+  .catch((error) => {
+      console.error('Fehler:', error);
+  });
 }
 
 //Funktion zum testen der Cups und Punkte
