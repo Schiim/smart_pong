@@ -59,16 +59,64 @@ function handleTeamSelection() {
 
 function prepareMatch() {
   if (selectedTeams.length === 2) {
-    const matchInfo = document.getElementById("matchInfo");
-    matchInfo.innerHTML =
-      generateMatchHTML(selectedTeams[0], 0) +
-      " vs " +
-      generateMatchHTML(selectedTeams[1], 1);
-    document.getElementById("endMatchButton").classList.remove("hidden");
+      const matchInfo = document.getElementById("matchInfo");
+      matchInfo.innerHTML =
+          generateMatchHTML(selectedTeams[0], 0) +
+          " vs " +
+          generateMatchHTML(selectedTeams[1], 1);
+      document.getElementById("endMatchButton").classList.remove("hidden");
+
+      // Send the team colors to the ESP32 and start the match
+      sendColorsToESP32(selectedTeams[0].color, selectedTeams[1].color);
+      startMatchOnESP32();
   }
 }
 
-//Funktion zum testen der Cups und Punkte
+function startMatchOnESP32() {
+  const url = "http://192.168.70.234/"; // ESP32 IP address
+  const data = {
+    command: "startMatch"
+  };
+
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.text())
+  .then(data => {
+    console.log('Success:', data);
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+}
+
+function sendColorsToESP32(color1, color2) {
+  const url = "http://192.168.70.234/"; // ESP32 IP address
+  const data = {
+      team1Color: hexToRgb(color1),
+      team2Color: hexToRgb(color2)
+  };
+
+  fetch(url, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+  })
+  .then(response => response.text())
+  .then(data => {
+      console.log('Success:', data);
+  })
+  .catch((error) => {
+      console.error('Error:', error);
+  });
+}
+
 function generateMatchHTML(team, index) {
   return `<div class="team-info">${team.name} <span class="team-color" style="color:${team.color}">●</span> 
             (<button class="small" onclick="changeCups(${index}, -1)">-</button> 
@@ -76,7 +124,6 @@ function generateMatchHTML(team, index) {
             <button class="small" onclick="changeCups(${index}, 1)">+</button>)</div>`;
 }
 
-//Dito. Ist zum Testen gedacht
 function changeCups(teamIndex, delta) {
   const team = selectedTeams[teamIndex];
   if (team.cups + delta >= 0 && team.cups + delta <= 6) {
@@ -84,21 +131,6 @@ function changeCups(teamIndex, delta) {
     document.getElementById(`cups${teamIndex}`).textContent = team.cups;
   }
 }
-
-/* Diese Funktion wird warscheinlich praktischer sein, sobald die Becher per Sensor gelesen werden
-
-        function prepareMatch() {
-            if (selectedTeams.length === 2) {
-                const matchInfo = document.getElementById('matchInfo');
-                matchInfo.innerHTML = `
-                    <div class="team-info">Match Team:</div>
-                    <div class="team-info">${selectedTeams[0].name} <span class="team-color" style="color:${selectedTeams[0].color}">●</span> (${selectedTeams[0].cups} Becher) vs ${selectedTeams[1].name} <span class="team-color" style="color:${selectedTeams[1].color}">●</span> (${selectedTeams[1].cups} Becher)</div>
-                `;
-                document.getElementById('endMatchButton').classList.remove('hidden');
-            }
-        }
-            
-*/
 
 function endMatch() {
   if (selectedTeams[0].cups > selectedTeams[1].cups) {
@@ -111,3 +143,43 @@ function endMatch() {
   document.getElementById("matchInfo").innerHTML = "";
   document.getElementById("endMatchButton").classList.add("hidden");
 }
+
+function handleButtonPressNotification() {
+  if (selectedTeams.length === 2) {
+    changeCups(0, -1);
+    changeCups(1, -1);
+  }
+}
+
+function checkButtonStatus() {
+  const url = "http://192.168.70.234/button-status"; // ESP32 IP address
+
+  fetch(url)
+    .then(response => response.text())
+    .then(status => {
+      if (status === "pressed") {
+        handleButtonPressNotification();
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+}
+
+function hexToRgb(hex) {
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+setInterval(checkButtonStatus, 1000); // Check every second
+
+document.addEventListener("DOMContentLoaded", () => {
+  checkButtonStatus();
+});
